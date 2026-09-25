@@ -24,7 +24,12 @@ class EvidenceGateway:
     async def call(self, tool_name: str, *, case_id: str, **arguments: str) -> dict[str, Any]:
         payload = {"case_id": case_id, **arguments}
         result = await self._session.call_tool(tool_name, arguments=payload)
-        if result.isError:
+        # mcp>=2,<3 (see pyproject.toml) renamed the pydantic field to
+        # `is_error`; `isError` is only the JSON serialization alias, not
+        # a real Python attribute, so `result.isError` raises
+        # AttributeError on every single call. `is_error` is the correct
+        # attribute for this SDK version.
+        if result.is_error:
             message = " ".join(
                 block.text for block in result.content if getattr(block, "text", None)
             )
